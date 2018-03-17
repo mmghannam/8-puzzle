@@ -9,6 +9,6 @@ class GameState:
         raise NotImplementedError
 
 
-class Configurtion:
-    def __init__(self):
-        pass
+class Configuration:
+    pass
+

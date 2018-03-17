@@ -1,2 +1,3 @@
 class Game:
-    pass
+    def solve(self):
+        raise NotImplementedError
