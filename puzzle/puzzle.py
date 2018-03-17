@@ -10,8 +10,8 @@ class Puzzle(Game):
     def __init__(self, width, height):
         self.board = Board(width, height)
 
-    def solve(self, frontier=AstarFrontier, heuristic='how_many_wrong'):
-        return solve(self.board, frontier, heuristic)
+    def solve(self, frontier=AstarFrontier, heuristic='how_many_wrong', show_path=False):
+        return solve(self.board, frontier, heuristic, show_path)
 
 
 class Board(GameState):
@@ -95,6 +95,9 @@ class Board(GameState):
 
     def __lt__(self, other):
         return True
+
+    def __hash__(self):
+        return hash(tuple([slot.number for slot in self.configuration.slots]))
 
 
 class PuzzleConfiguration(Configuration):
@@ -208,7 +211,7 @@ class PuzzleConfiguration(Configuration):
         elif func_name == 'wrong_and_manhattan':
             return self.wrong_and_manhattan()
         else:
-            return 0
+            raise ValueError
 
 
 class Slot:
