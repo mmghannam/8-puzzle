@@ -1,6 +1,9 @@
+from collections import deque
+
 class Frontier:
     def __init__(self):
-        self.entries = []  # override this to use other type for entries
+        self.entries = deque()  # override this to use other type for entries
+        self.items = set() # for fast checking
 
     def add_to(self, entry, priority=None):
         raise NotImplementedError
@@ -28,10 +31,11 @@ class Frontier:
         return len(self.entries) == 0
 
     def __contains__(self, item):
-        for entry in self.entries:
-            if entry == item:
-                return True
-        return False
+        # for entry in self.entries:
+        #     if entry == item:
+        #         return True
+        # return False
+        return item in self.items
 
     def __str__(self):
         return str(self.entries)

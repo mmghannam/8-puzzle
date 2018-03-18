@@ -46,44 +46,48 @@ class Board(GameState):
     def slide_up(self):
         conf = deepcopy(self.configuration)
         empty_index, empty_slot = conf.empty_slot()
-        x, y = conf.position_of(0)
-        if conf.on_top(empty_slot):
+        x, y = conf.position_from_index(empty_index)
+        if conf.on_top(y):
             return None
         else:
             other_index, _ = conf.get_slot_at(x, y - 1)
+            conf.update_empty(x, y - 1)
             conf.swap(empty_index, other_index)
             return Board(initial_conf=conf)
 
     def slide_down(self):
         conf = deepcopy(self.configuration)
         empty_index, empty_slot = conf.empty_slot()
-        x, y = conf.position_of(0)
-        if conf.on_bottom(empty_slot):
+        x, y = conf.position_from_index(empty_index)
+        if conf.on_bottom(y):
             return None
         else:
             other_index, _ = conf.get_slot_at(x, y + 1)
+            conf.update_empty(x, y + 1)
             conf.swap(empty_index, other_index)
             return Board(initial_conf=conf)
 
     def slide_left(self):
         conf = deepcopy(self.configuration)
         empty_index, empty_slot = conf.empty_slot()
-        x, y = conf.position_of(0)
-        if conf.on_left_side(empty_slot):
+        x, y = conf.position_from_index(empty_index)
+        if conf.on_left_side(x):
             return None
         else:
             other_index, _ = conf.get_slot_at(x - 1, y)
+            conf.update_empty(x - 1, y)
             conf.swap(empty_index, other_index)
             return Board(initial_conf=conf)
 
     def slide_right(self):
         conf = deepcopy(self.configuration)
         empty_index, empty_slot = conf.empty_slot()
-        x, y = conf.position_of(0)
-        if conf.on_right_side(empty_slot):
+        x, y = conf.position_from_index(empty_index)
+        if conf.on_right_side(x):
             return None
         else:
             other_index, _ = conf.get_slot_at(x + 1, y)
+            conf.update_empty(x + 1, y)
             conf.swap(empty_index, other_index)
             return Board(initial_conf=conf)
 
@@ -103,19 +107,25 @@ class Board(GameState):
 class PuzzleConfiguration(Configuration):
     def __init__(self, width, height):
         self.slots = [Slot(i) for i in range(width * height)]
-        seed(4)
+        seed(7)
         shuffle(self.slots)
         self.width = width
         self.height = height
-
-    def empty_slot(self):
         for i, slot in enumerate(self.slots):
             if slot.is_empty():
-                return i, slot
-        raise UndefinedConfigurationError
+                self.zero_slot = (i, slot)
+
+    def empty_slot(self):
+        return self.zero_slot
+
+    def update_empty(self, x, y):
+        self.zero_slot = (self.width * y + x, self.zero_slot[1])
 
     def to_list(self):
         return self.slots
+
+    def position_from_index(self, i):
+        return i % self.width, i // self.width  # (x,y)
 
     def get_slot_at(self, x, y):
         index = self.width * y + x
@@ -144,35 +154,27 @@ class PuzzleConfiguration(Configuration):
             if slot.number == number:
                 return i
 
-    def on_top(self, slot):
-        for i in range(self.width):
-            if slot == self.slots[i]:
-                return True
-        return False
+    def on_top(self, y):
+        return y == 0
 
-    def on_bottom(self, slot):
-        for i in range(self.width):
-            if slot == self.slots[self.height * (self.width - 1) + i]:
-                return True
-        return False
+    def on_bottom(self, y):
+        return y == self.height - 1
 
-    def on_left_side(self, slot):
-        for i in range(self.height):
-            if slot == self.slots[i * self.width]:
-                return True
-        return False
+    def on_left_side(self, x):
+        return x == 0
 
-    def on_right_side(self, slot):
-        for i in range(self.height):
-            if slot == self.slots[i * self.width + self.width - 1]:
-                return True
-        return False
+    def on_right_side(self, x):
+        return x == self.width - 1
 
     def __eq__(self, other):
-        for slot, other_slot in zip(self.slots, other.slots):
-            if slot != other_slot:
-                return False
-        return True
+        # for slot, other_slot in zip(self.slots, other.slots):
+        #     if slot != other_slot:
+        #         return False
+        # return True
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        return hash(tuple(self.slots))
 
     def manhattan_distance(self):
         distance = 0
@@ -226,6 +228,9 @@ class Slot:
 
     def __eq__(self, other):
         return self.number == other.number
+
+    def __hash__(self):
+        return hash(self.number)
 
 
 class UndefinedConfigurationError(Exception):
